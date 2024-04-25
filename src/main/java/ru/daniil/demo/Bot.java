@@ -1,20 +1,14 @@
 package ru.daniil.demo;
 
-import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-
-@Component
-public class Bot extends TelegramLongPollingBot {
+public class Bot implements LongPollingSingleThreadUpdateConsumer {
     @Override
-    public void onUpdateReceived(Update update) {
-
-    }
-
-    @Override
-    public String getBotUsername() {
-        return null;
+    public void consume(Update update) {
+        // We check if the update has a message and the message has text
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            System.out.println(update.getMessage().getText());
+        }
     }
 }
-
