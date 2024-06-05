@@ -7,6 +7,5 @@ import ru.bot.models.User;
 import java.util.List;
 
 public interface TagRepository extends CrudRepository<Tag,Long> {
-    List<Tag> findByUsers(User users);
-
+    List<Tag> findByUser(User user);
 }

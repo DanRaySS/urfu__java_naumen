@@ -3,7 +3,6 @@ package ru.bot.services;
 import ru.bot.models.Tag;
 import ru.bot.models.Task;
 import ru.bot.models.User;
-import ru.bot.repository.TagRepository;
 import ru.bot.repository.TaskRepository;
 
 import java.util.ArrayList;

@@ -14,7 +14,7 @@ public class TagService {
         this.tagRepository = tagRepository;
     }
     public List<Tag> getAllTags(User users){
-        return new ArrayList<>(tagRepository.findByUsers(users));
+        return new ArrayList<>(tagRepository.findByUser(users));
     }
 
     public void addTag(User user, String name, int color, boolean deletable){
@@ -24,6 +24,4 @@ public class TagService {
     public void delTag(Long id){
         tagRepository.deleteById(id);
     }
-
-
 }

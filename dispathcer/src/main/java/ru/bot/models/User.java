@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
-@Getter
+
 @Entity
-@Table
+@Table(name = "users")
 public class User {
+
+    @Setter
+    @Getter
     @Id
     @Column
     private Long id;

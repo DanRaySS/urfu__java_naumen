@@ -4,8 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.CopyMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -53,72 +57,59 @@ public class Bot extends TelegramLongPollingBot {
 //                .build();
 
         var msg = update.getMessage();
-
-
-
-
         var user = msg.getFrom();
         var id = user.getId();
+        sendText();
+        sendMenu(id,"test",keyboardM2);
 
-        if(screaming)                            //If we are screaming
-            scream(id, update.getMessage());     //Call a custom method
-        else
-            copyMessage(id, msg.getMessageId()); //Else proceed normally
-
-        if(msg.isCommand()){
-            if(msg.getText().equals("/help"))         //If the command was /scream, we switch gears
-                screaming = true;
-            else if (msg.getText().equals("/settings"))  //Otherwise, we return to normal
-                screaming = false;
-
-            return;                                     //We don't want to echo commands, so we exit
+        if(update.hasCallbackQuery()){
         }
-    }
 
-    private void scream(Long id, Message msg) {
-        if(msg.hasText())
-            sendText(id, msg.getText().toUpperCase());
-        else
-            copyMessage(id, msg.getMessageId());  //We can't really scream a sticker
-    }
+        return;                                     //We don't want to echo commands, so we exit
 
-    public void copyMessage(Long who, Integer msgId){
-        CopyMessage cm = CopyMessage.builder()
-                .fromChatId(who.toString())  //We copy from the user
-                .chatId(who.toString())      //And send it back to him
-                .messageId(msgId)            //Specifying what message
+    }
+    private void buttonTap(Long id, String queryId, String data, int msgId) {
+
+        EditMessageText newTxt = EditMessageText.builder()
+                .chatId(id.toString())
+                .messageId(msgId).text("").build();
+
+        EditMessageReplyMarkup newKb = EditMessageReplyMarkup.builder()
+                .chatId(id.toString()).messageId(msgId).build();
+
+        if(data.equals("next")) {
+            newTxt.setText("MENU 2");
+            newKb.setReplyMarkup(keyboardM2);
+        } else if(data.equals("back")) {
+            newTxt.setText("MENU 1");
+            newKb.setReplyMarkup(keyboardM1);
+        }
+
+        AnswerCallbackQuery close = AnswerCallbackQuery.builder()
+                .callbackQueryId(queryId).build();
+
+    }
+    public void sendText(){
+
+
+        var getTask = InlineKeyboardButton.builder()
+                .text("Задачи").callbackData("getTask")
                 .build();
+
+
+        keyboardM2 = InlineKeyboardMarkup.builder()
+                .keyboardRow(List.of(getTask))
+                .build();
+
+    }
+    public void sendMenu(Long who, String txt, InlineKeyboardMarkup kb){
+        SendMessage sm = SendMessage.builder().chatId(who.toString())
+                .parseMode("HTML").text(txt)
+                .replyMarkup(kb).build();
         try {
-            execute(cm);
+            execute(sm);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    public void sendText(Long who, String what){
-        SendMessage sm = SendMessage.builder()
-                .chatId(who.toString()) //Who are we sending a message to
-                .text(what).build();    //Message content
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
-
-        KeyboardRow row = new KeyboardRow();
-        row.add("Добавить задачу");
-        row.add("Архив задач");
-        keyboardRows.add(row);
-
-        row = new KeyboardRow();
-        row.add("Выбрать задачу");
-        keyboardRows.add(row);
-
-        keyboardMarkup.setKeyboard(keyboardRows);
-        sm.setReplyMarkup(keyboardMarkup);
-
-
-        try {
-            execute(sm);                        //Actually sending the message
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);      //Any error will be printed here
         }
     }
 }
