@@ -86,7 +86,7 @@ public class Bot extends TelegramLongPollingBot {
         row.add("📋 Архив задач");
         taskKeyboardRows.add(row);
         row = new KeyboardRow();
-        row.add("⬅\uFE0F Главное Меню");
+        row.add("⬅ Главное Меню");
         taskKeyboardRows.add(row);
 
         taskKeyboardMarkup.setKeyboard(taskKeyboardRows);
@@ -117,7 +117,8 @@ public class Bot extends TelegramLongPollingBot {
     public void menuLogic(String msg, Long id, String user){
         switch (msg){
             case ("➕ Добавить задачу"):
-                addTask(id);
+                User userInfo = new User(id, null, null);
+                addTask(id, msg, userInfo);
                 break;
             case ("📋 Архив задач"):
                 archive();
@@ -137,31 +138,31 @@ public class Bot extends TelegramLongPollingBot {
             case ("/start"):
                 sendText(id, "Привет "+ user, mainMenuKeyboard);
                 usersService.addUser(id);
-            case ("⬅\uFE0F Главное Меню"):
+            case ("⬅ Главное Меню"):
                 sendText(id, "Главное меню",mainMenuKeyboard);
 
         }
     }
 
 
-    public void addTask(Long id){
-        sendText(id,"Введите название",tasksKeyboard);
-        String summary = message;
-        if(!summary.isEmpty()){
+    public void addTask(Long id, String msg, User userInfo){
+        if (msg.equals("➕ Добавить задачу")) {
+            sendText(id, "Введите название", tasksKeyboard);
+            return;
+        }
+
+        if(userInfo.lastSummary == null || userInfo.lastSummary.trim().isEmpty()){
+            userInfo.lastSummary = msg;
             sendText(id,"Введите описание",tasksKeyboard);
+            return;
         }
-        else
-        {
-            addTask(id);
-        }
-        String description = message;
-        if(!description.isEmpty()){
+
+        if(userInfo.lastDesc == null || userInfo.lastDesc.trim().isEmpty()){
+            userInfo.lastDesc = msg;
             sendText(id,"Введите теги",tasksKeyboard);
+            return;
         }
-        else
-        {
-            addTask(id);
-        }
+
         String tags = message;
         List<Tag> tagList =new ArrayList<>();
         if (!tags.isEmpty()){
@@ -170,7 +171,6 @@ public class Bot extends TelegramLongPollingBot {
             }
         }
         taskService.createTask(summary,description,id,tagList);
-
     }
     public void archive(){
 

@@ -13,7 +13,7 @@ public class UsersService {
     }
 
     public void addUser(Long id){
-        User user = new User(id);
+        User user = new User(id, null, null);
         userRepository.save(user);
     }
 }
