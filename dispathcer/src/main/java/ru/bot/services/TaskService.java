@@ -22,9 +22,10 @@ public class TaskService {
         this.userRepository = userRepository;
     }
 
-    public void createTask(String summary, String description, User user, List<Tag> tag){
+    public void createTask(String summary, String description, Long id, List<Tag> tag){
         Long time = System.currentTimeMillis() / 1000L;
-        Task task = new Task(user,time,summary,description,tag);
+        Task task = new Task(userRepository.findById(id).get(),time,summary,description,tag);
+        taskRepository.save(task);
     }
     public void delTaskById(Long id){
         taskRepository.deleteById(id);

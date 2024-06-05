@@ -10,9 +10,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.bot.models.Tag;
 import ru.bot.models.User;
 import ru.bot.repository.TaskRepository;
 import ru.bot.repository.UserRepository;
+import ru.bot.services.TagService;
 import ru.bot.services.TaskService;
 import ru.bot.services.UsersService;
 
@@ -25,12 +27,14 @@ public class Bot extends TelegramLongPollingBot {
 
     final UsersService usersService;
     final TaskService taskService;
+    final TagService tagService;
 
-    private ReplyKeyboardMarkup currentKeyboardMarkup;
     private ReplyKeyboardMarkup mainMenuKeyboard;
     private ReplyKeyboardMarkup tasksKeyboard;
 
+    private ReplyKeyboardMarkup yesNoKeyboard;
 
+    String message;
     private InlineKeyboardMarkup keyboardM1;
     private InlineKeyboardMarkup keyboardM2;
 
@@ -49,31 +53,22 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-//        keyboardM1 = InlineKeyboardMarkup.builder()
-//                .keyboardRow(List.of(next)).build();
-//
-//        keyboardM2 = InlineKeyboardMarkup.builder()
-//                .keyboardRow(List.of(back))
-//                .keyboardRow(List.of(url))
-//                .build();
         createKeyboards();
-
         var msg = update.getMessage();
+        message = msg.getText();
         var user = msg.getFrom();
         var id = user.getId();
         var userName = user.getUserName();
-        menuLogic(msg.getText(),id);
+        menuLogic(msg.getText(),id,userName);
 
         return;                                     //We don't want to echo commands, so we exit
 
     }
-    public void sendText(Long who, String what){
+    public void sendText(Long who, String what, ReplyKeyboardMarkup keyboard){
         SendMessage sm = SendMessage.builder()
                 .chatId(who.toString()) //Who are we sending a message to
                 .text(what).build();    //Message content
-
-        sm.setReplyMarkup(mainMenuKeyboard);
-
+        sm.setReplyMarkup(keyboard);
 
         try {
             execute(sm);                        //Actually sending the message
@@ -86,13 +81,12 @@ public class Bot extends TelegramLongPollingBot {
         List<KeyboardRow> taskKeyboardRows = new ArrayList<>();
 
         KeyboardRow row = new KeyboardRow();
-
+        row.add("👆 Выбрать задачу");
         row.add("➕ Добавить задачу");
         row.add("📋 Архив задач");
         taskKeyboardRows.add(row);
         row = new KeyboardRow();
-        row.add("👆 Выбрать задачу");
-		e517d6238d2cf555afbc5ce32d3bf0ef3cb1bb98
+        row.add("⬅\uFE0F Главное Меню");
         taskKeyboardRows.add(row);
 
         taskKeyboardMarkup.setKeyboard(taskKeyboardRows);
@@ -108,57 +102,80 @@ public class Bot extends TelegramLongPollingBot {
         mainKeyboardMarkup.setKeyboard(mainKeyboardRows);
         mainMenuKeyboard = mainKeyboardMarkup;
 
+        ReplyKeyboardMarkup yesNoKeyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> yesNoKeyboardRows = new ArrayList<>();
+        row = new KeyboardRow();
+        row.add("Да");
+        row.add("Нет");
+        yesNoKeyboardRows.add(row);
+        yesNoKeyboardMarkup.setKeyboard(yesNoKeyboardRows);
+        yesNoKeyboard = yesNoKeyboardMarkup;
+
 
 
     }
-    public void menuLogic(String msg, Long id){
+    public void menuLogic(String msg, Long id, String user){
         switch (msg){
-            case (" Добавить задачу"):
-                addTask();
+            case ("➕ Добавить задачу"):
+                addTask(id);
                 break;
-            case (" Архив задач"):
+            case ("📋 Архив задач"):
                 archive();
                 break;
-            case (" Выбрать задачу"):
+            case ("👆 Выбрать задачу"):
                 choseTask();
                 break;
             case ("Мои Задачи"):
-                myTasks(id);
+                if(taskService.getAllTasks(id).isEmpty()){
+                    sendText(id,"Нет задач",tasksKeyboard);
+                }
+                else {
+                    sendText(id,String.join("\n",taskService.getAllTasks(id)),tasksKeyboard);
+                }
+
                 break;
             case ("/start"):
-                startInit(id);
-            case ("Главное Меню"):
-                sendText(id, "Главное меню");
+                sendText(id, "Привет "+ user, mainMenuKeyboard);
+                usersService.addUser(id);
+            case ("⬅\uFE0F Главное Меню"):
+                sendText(id, "Главное меню",mainMenuKeyboard);
 
         }
     }
-    public void myTasks(Long user_id ){
-        SendMessage sm = SendMessage.builder()
-                .chatId(user_id.toString()).text(String.join("\n",taskService.getAllTasks(user_id))).build(); //Who are we sending a message to//Message content
 
-        sm.setReplyMarkup(tasksKeyboard);
 
-        try {
-            execute(sm);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+    public void addTask(Long id){
+        sendText(id,"Введите название",tasksKeyboard);
+        String summary = message;
+        if(!summary.isEmpty()){
+            sendText(id,"Введите описание",tasksKeyboard);
         }
-
-    }
-    public void startInit(long id){
-        usersService.addUser(id);
-    }
-    public void addTask(){
+        else
+        {
+            addTask(id);
+        }
+        String description = message;
+        if(!description.isEmpty()){
+            sendText(id,"Введите теги",tasksKeyboard);
+        }
+        else
+        {
+            addTask(id);
+        }
+        String tags = message;
+        List<Tag> tagList =new ArrayList<>();
+        if (!tags.isEmpty()){
+            for (String tag: tags.split(" ")){
+                tagList.add(tagService.getTagBySummary(tag));
+            }
+        }
+        taskService.createTask(summary,description,id,tagList);
 
     }
     public void archive(){
 
     }
     public void choseTask(){
-
-    }
-
-    public void sendMenu(Long who, String txt, InlineKeyboardMarkup kb){
 
     }
 }

@@ -29,18 +29,9 @@ public class Tag {
     public Tag() {
     }
 
-    public Tag(User users, String name, boolean deletable, int color) {
+    public Tag(User users, String name, boolean deletable) {
         this.user = users;
         this.name = name;
         this.deletable = deletable;
-        this.color = color;
-    }
-
-    public User getUsers() {
-        return user;
-    }
-
-    public void setUsers(User users) {
-        this.user = users;
     }
 }
