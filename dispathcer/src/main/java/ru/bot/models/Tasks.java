@@ -1,9 +1,12 @@
 package ru.bot.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+
+import java.util.List;
 
 @Entity
-@Table(name = "tasks")
+@Table
 public class Tasks {
     @Id
     @GeneratedValue
@@ -11,12 +14,17 @@ public class Tasks {
     @OneToOne
     @JoinColumn(name = "users_id", referencedColumnName = "id")
     private Users users;
+
     @Column
     private Integer number;
     @Column
     private Long start_date;
-    @Column
-    private int[] tags;
+    @OneToMany
+    @JoinColumn(name = "tags", referencedColumnName = "id")
+    private List<Tags> tags;
+
+    public Tasks() {
+    }
 
     public Long getId() {
         return id;
@@ -50,21 +58,19 @@ public class Tasks {
         this.start_date = start_date;
     }
 
-    public int[] getTags() {
+    public List<Tags> getTags() {
         return tags;
     }
 
-    public void setTags(int[] tags) {
+    public void setTags(List<Tags> tags) {
         this.tags = tags;
     }
 
-    public Tasks(Users users, Integer number, Long start_date, int[] tags) {
+    public Tasks(Long id, Users users, Integer number, Long start_date, List<Tags> tags) {
+        this.id = id;
         this.users = users;
         this.number = number;
         this.start_date = start_date;
         this.tags = tags;
-    }
-
-    public Tasks() {
     }
 }

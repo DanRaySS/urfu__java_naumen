@@ -3,7 +3,7 @@ package ru.bot.models;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name="users")
+@Table
 public class Users {
     @Id
     @Column
