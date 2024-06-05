@@ -80,11 +80,11 @@ public class Bot extends TelegramLongPollingBot {
         List<KeyboardRow> taskKeyboardRows = new ArrayList<>();
 
         KeyboardRow row = new KeyboardRow();
-        row.add("\\U00002795 Добавить задачу");
-        row.add("\\U0001F4BC Архив задач");
+        row.add("➕ Добавить задачу");
+        row.add("📋 Архив задач");
         taskKeyboardRows.add(row);
         row = new KeyboardRow();
-        row.add("\\U0001F5D3 Выбрать задачу");
+        row.add("👆 Выбрать задачу");
         taskKeyboardRows.add(row);
 
         taskKeyboardMarkup.setKeyboard(taskKeyboardRows);

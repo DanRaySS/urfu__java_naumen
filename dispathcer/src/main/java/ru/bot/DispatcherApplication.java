@@ -12,7 +12,8 @@ import ru.bot.controller.Bot;
 public class DispatcherApplication {
     public static void main(String[] args) throws TelegramApiException {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(new Bot());
+        Bot bot = new Bot();
+        botsApi.registerBot(bot);
         SpringApplication.run(DispatcherApplication.class);
     }
 }
