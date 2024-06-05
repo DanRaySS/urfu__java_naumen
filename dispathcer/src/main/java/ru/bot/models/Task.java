@@ -54,4 +54,9 @@ public class Task {
     public void setTags(List<Tag> tags) {
         this.tag = tags;
     }
+
+    @Override
+    public String toString() {
+        return summary;
+    }
 }

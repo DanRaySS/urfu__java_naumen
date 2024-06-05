@@ -1,5 +1,7 @@
 package ru.bot.services;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Service;
 import ru.bot.models.Tag;
 import ru.bot.models.Task;
 import ru.bot.models.User;
@@ -8,7 +10,9 @@ import ru.bot.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@Service
 public class TaskService {
     protected final TaskRepository taskRepository;
     protected final UserRepository userRepository;
@@ -25,7 +29,15 @@ public class TaskService {
     public void delTaskById(Long id){
         taskRepository.deleteById(id);
     }
-    public List<Task> getAllTasks(Long user_id){
-        return new ArrayList<>(taskRepository.findByUsers(userRepository.findById(user_id).get()));
+    public List<String> getAllTasks(Long user_id){
+        User user = new User();
+        if(userRepository.findById(user_id).isPresent()){
+            user = userRepository.findById(user_id).get();
+        }
+        else throw new RuntimeException("No Such User");
+
+        List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
+
+        return temp.stream().map(Objects::toString).toList();
     }
 }

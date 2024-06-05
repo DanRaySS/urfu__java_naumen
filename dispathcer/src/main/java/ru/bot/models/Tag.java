@@ -4,27 +4,25 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table
 public class Tag {
-    @Getter
-    @Setter
+
     @Id
     @GeneratedValue
     private Long id;
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
-    @Setter
-    @Getter
+
     @Column
     private String name;
-    @Setter
-    @Getter
+
     @Column
     private boolean deletable;
-    @Setter
-    @Getter
+
     @Column
     private int color;
 

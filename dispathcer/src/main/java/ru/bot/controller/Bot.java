@@ -1,5 +1,6 @@
 package ru.bot.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -9,19 +10,22 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.bot.models.User;
+import ru.bot.repository.TaskRepository;
+import ru.bot.repository.UserRepository;
+import ru.bot.services.TaskService;
+import ru.bot.services.UsersService;
 
 import java.util.List;
 import java.util.ArrayList;
 
-
+@RequiredArgsConstructor
 @Component
 public class Bot extends TelegramLongPollingBot {
-    @Value("$bot.token")
-    private String botToken;
-    @Value("$bot.name")
-    private String botName;
 
-    private boolean screaming = false;
+    final UsersService usersService;
+    final TaskService taskService;
+
     private ReplyKeyboardMarkup currentKeyboardMarkup;
     private ReplyKeyboardMarkup mainMenuKeyboard;
     private ReplyKeyboardMarkup tasksKeyboard;
@@ -29,6 +33,8 @@ public class Bot extends TelegramLongPollingBot {
 
     private InlineKeyboardMarkup keyboardM1;
     private InlineKeyboardMarkup keyboardM2;
+
+
 
 
     @Override
@@ -80,10 +86,11 @@ public class Bot extends TelegramLongPollingBot {
         List<KeyboardRow> taskKeyboardRows = new ArrayList<>();
 
         KeyboardRow row = new KeyboardRow();
-        row.add("\\U00002795 Добавить задачу");
-        row.add("\\U0001F4BC Архив задач");
+        row.add("Главное Меню");
         taskKeyboardRows.add(row);
         row = new KeyboardRow();
+        row.add("\\U00002795 Добавить задачу");
+        row.add("\\U0001F4BC Архив задач");
         row.add("\\U0001F5D3 Выбрать задачу");
         taskKeyboardRows.add(row);
 
@@ -117,20 +124,28 @@ public class Bot extends TelegramLongPollingBot {
             case ("Мои Задачи"):
                 myTasks(id);
                 break;
+            case ("/start"):
+                startInit(id);
+            case ("Главное Меню"):
+                sendText(id, "Главное меню");
+
         }
     }
     public void myTasks(Long user_id ){
         SendMessage sm = SendMessage.builder()
-                .chatId(user_id.toString()).text("Мои Задачи").build(); //Who are we sending a message to//Message content
+                .chatId(user_id.toString()).text(String.join("\n",taskService.getAllTasks(user_id))).build(); //Who are we sending a message to//Message content
 
         sm.setReplyMarkup(tasksKeyboard);
 
         try {
-            execute(sm);                        //Actually sending the message
+            execute(sm);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);      //Any error will be printed here
+            throw new RuntimeException(e);
         }
 
+    }
+    public void startInit(long id){
+        usersService.addUser(id);
     }
     public void addTask(){
 

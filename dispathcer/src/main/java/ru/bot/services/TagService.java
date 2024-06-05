@@ -1,12 +1,13 @@
 package ru.bot.services;
 
+import org.springframework.stereotype.Service;
 import ru.bot.models.Tag;
 import ru.bot.models.User;
 import ru.bot.repository.TagRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@Service
 public class TagService {
     protected final TagRepository tagRepository;
 
