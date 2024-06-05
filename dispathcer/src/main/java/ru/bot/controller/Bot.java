@@ -32,7 +32,7 @@ public class Bot extends TelegramLongPollingBot {
     private ReplyKeyboardMarkup mainMenuKeyboard;
     private ReplyKeyboardMarkup tasksKeyboard;
 
-    private ReplyKeyboardMarkup yesNoKeyboard;
+    private ReplyKeyboardMarkup cancelKeyboard;
 
     String message;
     private InlineKeyboardMarkup keyboardM1;
@@ -102,14 +102,13 @@ public class Bot extends TelegramLongPollingBot {
         mainKeyboardMarkup.setKeyboard(mainKeyboardRows);
         mainMenuKeyboard = mainKeyboardMarkup;
 
-        ReplyKeyboardMarkup yesNoKeyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> yesNoKeyboardRows = new ArrayList<>();
+        ReplyKeyboardMarkup cancelKeyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> cancelKeyboardRows = new ArrayList<>();
         row = new KeyboardRow();
-        row.add("Да");
-        row.add("Нет");
-        yesNoKeyboardRows.add(row);
-        yesNoKeyboardMarkup.setKeyboard(yesNoKeyboardRows);
-        yesNoKeyboard = yesNoKeyboardMarkup;
+        row.add("Отмена");
+        cancelKeyboardRows.add(row);
+        cancelKeyboardMarkup.setKeyboard(cancelKeyboardRows);
+        cancelKeyboard = cancelKeyboardMarkup;
 
 
 
@@ -117,7 +116,7 @@ public class Bot extends TelegramLongPollingBot {
     public void menuLogic(String msg, Long id, String user){
         switch (msg){
             case ("➕ Добавить задачу"):
-                addTask(id);
+                addTask(id, msg);
                 break;
             case ("📋 Архив задач"):
                 archive();
@@ -144,32 +143,54 @@ public class Bot extends TelegramLongPollingBot {
     }
 
 
-    public void addTask(Long id){
-        sendText(id,"Введите название",tasksKeyboard);
-        String summary = message;
-        if(!summary.isEmpty()){
-            sendText(id,"Введите описание",tasksKeyboard);
+    public void addTask(Long id, String message){
+        sendText(id,"Введите название",cancelKeyboard);
+        if (!message.equals("Отмена")){
+            String summary = message;
+            System.out.println(summary);
         }
-        else
-        {
-            addTask(id);
+
+        sendText(id,"Введите описание",cancelKeyboard);
+        if (!message.equals("Отмена")){
+            String description = message;
+            System.out.println(description);
         }
-        String description = message;
-        if(!description.isEmpty()){
-            sendText(id,"Введите теги",tasksKeyboard);
+
+        sendText(id,"Введите теги",cancelKeyboard);
+        if (!message.equals("Отмена")){
+            String tags = message;
+            System.out.println(tags);
         }
-        else
-        {
-            addTask(id);
-        }
-        String tags = message;
-        List<Tag> tagList =new ArrayList<>();
-        if (!tags.isEmpty()){
-            for (String tag: tags.split(" ")){
-                tagList.add(tagService.getTagBySummary(tag));
-            }
-        }
-        taskService.createTask(summary,description,id,tagList);
+
+
+//        sendText(id,"Введите название",cancelKeyboard);
+//        String summary = message;
+//
+//
+//
+//        if(!summary.isEmpty()){
+//            sendText(id,"Введите описание",tasksKeyboard);
+//        }
+//        else
+//        {
+//            addTask(id);
+//        }
+//        String description = message;
+//        if(!description.isEmpty()){
+//            sendText(id,"Введите теги",tasksKeyboard);
+//        }
+//        else
+//        {
+//            addTask(id);
+//        }
+//        String tags = message;
+//        List<Tag> tagList =new ArrayList<>();
+//        if (!tags.isEmpty()){
+//            for (String tag: tags.split(" ")){
+//                tagList.add(tagService.getTagBySummary(tag));
+//            }
+//        }
+//        taskService.createTask(summary,description,id,tagList);
 
     }
     public void archive(){
