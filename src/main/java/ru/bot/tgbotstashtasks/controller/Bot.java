@@ -81,6 +81,7 @@ public class Bot extends TelegramLongPollingBot {
                         tag = messageText;
                         addTag();
                     }
+
                 }
             }
 
