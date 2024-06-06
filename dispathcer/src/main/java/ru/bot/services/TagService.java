@@ -18,12 +18,14 @@ public class TagService {
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
     }
-    public String getAllTags(Long user_id){
+    public String getAllTagsName(Long user_id){
         User user = new User();
         if(userRepository.findById(user_id).isPresent()){
             user = userRepository.findById(user_id).get();
         }
-        else throw new RuntimeException("No Such User");
+        else{
+            userRepository.save(new User(user_id));
+        }
         List<Tag> temp = new ArrayList<>(tagRepository.findByUser(user));
         StringBuilder tempS = new StringBuilder();
         for (int i = 0; i< temp.size(); i++) {

@@ -10,6 +10,5 @@ import java.util.List;
 @Repository
 public interface TaskRepository extends CrudRepository<Task,Long> {
     List<Task> findByUsers(User users);
-
 }
 

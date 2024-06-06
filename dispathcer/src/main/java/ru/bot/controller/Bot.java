@@ -40,6 +40,7 @@ public class Bot extends TelegramLongPollingBot {
     String tags;
     String chose;
     String tag;
+    String INSTRUCTION = "Иструкция!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 
 
     @Override
@@ -95,35 +96,6 @@ public class Bot extends TelegramLongPollingBot {
 
     }
 
-    public void addTask() {
-        if (state == State.NULL) {
-            sendText(userId, "Введите название", tasksKeyboard);
-            state = State.SUMMARY;
-            return;
-        }
-        if (state == State.SUMMARY) {
-            sendText(userId, "Введите описание", tasksKeyboard);
-            state = State.DESCRIPTION;
-            return;
-        }
-        if (state == State.DESCRIPTION) {
-            sendText(userId, "Введите тэги через пробел\n" + tagService.getAllTags(userId) , tasksKeyboard);
-            state = State.TAGS;
-            return;
-        }
-        if (state == State.TAGS) {
-            state = State.NULL;
-            sendText(userId, "Задание " + summary + " успешно добавленно", tasksKeyboard);
-            List<Tag> tempTags = new ArrayList<>();
-            String[] tegege = tags.split(" ");
-            for (String tag : tegege) {
-                tempTags.add(tagService.getTagBySummary(tag));
-            }
-            taskService.createTask(summary, description, userId, tempTags);
-        }
-
-    }
-
     public void menuLogic(String msg, Long id, String user) {
         switch (msg) {
             case ("➕ Добавить задачу"):
@@ -152,12 +124,43 @@ public class Bot extends TelegramLongPollingBot {
                 sendText(userId,"Меню Настройки",settingsKeyboard);
                 break;
             case ("Мои теги"):
-                sendText(userId,tagService.getAllTags(userId),tagsKeyboard);
+                if(!tagService.getAllTagsName(userId).isEmpty()){
+                    sendText(userId,tagService.getAllTagsName(userId),tagsKeyboard);
+                }
+                else {
+                    sendText(userId,"Нет тэгов",tagsKeyboard);
+                }
                 break;
             case ("Создать тэг"):
                 addTag();
                 break;
+            case ("Инструкция"):
+                sendText(userId,INSTRUCTION,mainMenuKeyboard);
+                break;
         }
+    }
+    public void addTask() {
+        if (state == State.NULL) {
+            sendText(userId, "Введите название", tasksKeyboard);
+            state = State.SUMMARY;
+            return;
+        }
+        if (state == State.SUMMARY) {
+            sendText(userId, "Введите описание", tasksKeyboard);
+            state = State.DESCRIPTION;
+            return;
+        }
+        if (state == State.DESCRIPTION) {
+            sendText(userId, "Введите тэги через пробел\n" + tagService.getAllTagsName(userId) , tasksKeyboard);
+            state = State.TAGS;
+            return;
+        }
+        if (state == State.TAGS) {
+            state = State.NULL;
+            taskService.createTask(summary, description, userId,tagService.getTagBySummary(tag));
+            sendText(userId, "Задание " + summary + " успешно добавленно", tasksKeyboard);
+        }
+
     }
 
     public void choseTask() {

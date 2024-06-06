@@ -29,19 +29,19 @@ public class Task {
     @Column
     private String description;
 
-    @ManyToMany
-    @JoinColumn(name = "tags", referencedColumnName = "id")
-    private List<Tag> tags;
+    @ManyToOne
+    @JoinColumn(name = "tag", referencedColumnName = "id")
+    private Tag tag;
 
     public Task() {
     }
 
-    public Task(User users, Long start_date, String summary, String description, List<Tag> tags) {
+    public Task(User users, Long start_date, String summary, String description, Tag tag) {
         this.users = users;
         this.start_date = start_date;
         this.summary = summary;
         this.description = description;
-        this.tags = tags;
+        this.tag = tag;
     }
 
     @Override
