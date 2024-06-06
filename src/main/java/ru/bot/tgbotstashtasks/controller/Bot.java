@@ -12,6 +12,11 @@ import ru.bot.tgbotstashtasks.services.TagService;
 import ru.bot.tgbotstashtasks.services.TaskService;
 import ru.bot.tgbotstashtasks.services.UsersService;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Properties;
+
 @RequiredArgsConstructor
 @Component
 public class Bot extends TelegramLongPollingBot {
@@ -41,12 +46,28 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "timetracker_surkov_bot";
+        try {
+            var props = new Properties();
+            var envFile = Paths.get("path/to/.env");
+            var inputStream = Files.newInputStream(envFile);
+            props.load(inputStream);
+            return (String) props.get("NAME");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public String getBotToken() {
-        return "7391871305:AAFg8orESIaDLPSrbcv5dn8e9ec3fedCue0";
+        try {
+            var props = new Properties();
+            var envFile = Paths.get("path/to/.env");
+            var inputStream = Files.newInputStream(envFile);
+            props.load(inputStream);
+            return (String) props.get("TOKEN");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
