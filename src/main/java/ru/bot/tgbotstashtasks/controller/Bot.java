@@ -23,7 +23,6 @@ public class Bot extends TelegramLongPollingBot {
     KeyboardManager keyboardManager= new KeyboardManager();
     private ReplyKeyboardMarkup mainMenuKeyboard;
     private ReplyKeyboardMarkup tasksKeyboard;
-    private ReplyKeyboardMarkup yesNoKeyboard;
     private ReplyKeyboardMarkup choseKeyboard;
     private ReplyKeyboardMarkup settingsKeyboard;
     private ReplyKeyboardMarkup tagsKeyboard;
@@ -36,7 +35,11 @@ public class Bot extends TelegramLongPollingBot {
     String tags;
     String chose;
     String tag;
-    String INSTRUCTION = "Добро пожаловать в 'Телеграм-бот для хранения задач'!\n";
+    String INSTRUCTION = "Добро пожаловать!\n" +
+            "Перед добавлением задачи необходимо добавить тег в настройках (например, \"Важно\")\n" +
+            "Чтобы добавить задачу, перейдите в раздел \"Мои задачи\" и нажмите \"Добавить задачу\". Введите название и описание задачи, выберите тег задачи.\n" +
+            "Подробности задачи можно прочитать, используя кнопку \"Выбрать задачу\".\n" +
+            "Все задачи можно увидеть при переходе в раздел \"Мои задачи\" или по нажатию кнопки \"Архив задач\".";
 
 
     @Override
@@ -88,7 +91,7 @@ public class Bot extends TelegramLongPollingBot {
 
         }
 
-        return;                                     //We don't want to echo commands, so we exit
+        return;
 
     }
 
@@ -107,7 +110,7 @@ public class Bot extends TelegramLongPollingBot {
                 returnTask();
                 break;
             case ("/start"):
-                sendText(id, "Привет " + user, mainMenuKeyboard);
+                sendText(id, "Добро пожаловать, " + user + ".\nИспользуйте кнопки меню для навигации.", mainMenuKeyboard);
                 usersService.addUser(id);
                 break;
             case ("⬅ Главное Меню"):
@@ -117,17 +120,17 @@ public class Bot extends TelegramLongPollingBot {
                 delTask();
                 break;
             case ("Настройки"):
-                sendText(userId,"Меню Настройки",settingsKeyboard);
+                sendText(userId,"Настройки",settingsKeyboard);
                 break;
             case ("Мои теги"):
                 if(!tagService.getAllTagsName(userId).isEmpty()){
-                    sendText(userId,tagService.getAllTagsName(userId),tagsKeyboard);
+                    sendText(userId,tagService.getAllTagsName(userId), tagsKeyboard);
                 }
                 else {
-                    sendText(userId,"Нет тэгов",tagsKeyboard);
+                    sendText(userId,"Теги не найдены. Добавьте теги для возможности добавления задач.", tagsKeyboard);
                 }
                 break;
-            case ("Создать тэг"):
+            case ("Создать тег"):
                 addTag();
                 break;
             case ("Инструкция"):
@@ -149,9 +152,9 @@ public class Bot extends TelegramLongPollingBot {
         if (state == State.DESCRIPTION) {
             if (tagService.getAllTagsName(userId).isEmpty()) {
                 state = State.NULL;
-                sendText(userId, "У вас нет тэгов. Добавьте их через Главное меню: 'Настройки' ➡️ 'Мои тэги' ➡️ 'Создать тэг'.", tasksKeyboard);
+                sendText(userId, "У вас нет сохранных тегов. Добавьте в разделе «Настройки»", tasksKeyboard);
             } else {
-                sendText(userId, "Укажите название тэга из списка:\n" + tagService.getAllTagsName(userId), tasksKeyboard);
+                sendText(userId, "Укажите номер тега из списка...\n\n" + tagService.getAllTagsName(userId), tasksKeyboard);
                 state = State.TAGS;
                 return;
             }
@@ -159,19 +162,19 @@ public class Bot extends TelegramLongPollingBot {
         if (state == State.TAGS) {
             state = State.NULL;
             taskService.createTask(summary, description, userId,tagService.getTagBySummary(tag));
-            sendText(userId, "Задание " + "'" + summary + "'" + " успешно добавленно", tasksKeyboard);
+            sendText(userId, "Задача «" + summary + "» успешно добавлена.", tasksKeyboard);
         }
 
     }
 
     public void choseTask() {
         if (state == State.NULL) {
-            sendText(userId, "Введите номер задачи", tasksKeyboard);
+            sendText(userId, "Введите номер задачи...", tasksKeyboard);
             state = State.CHOSE;
             return;
         }
         if (state == State.CHOSE) {
-            sendText(userId, "Вы выбрали задание: " + chose, tasksKeyboard);
+            sendText(userId, "Выбрана задача «" + chose + "».", tasksKeyboard);
             sendText(userId, taskService.getTaskById(Long.parseLong(chose), userId), choseKeyboard);
             state = State.NULL;
         }
@@ -179,32 +182,32 @@ public class Bot extends TelegramLongPollingBot {
 
     public void returnTask() {
         if (taskService.getAllTasks(userId).isEmpty()) {
-            sendText(userId, "Нет задач", tasksKeyboard);
+            sendText(userId, "Нет задач.", tasksKeyboard);
         } else {
             sendText(userId, String.join("\n", taskService.getAllTasks(userId)), tasksKeyboard);
         }
     }
 
     public void delTask() {
-        sendText(userId, "Задача " + "'" + chose + "'" + " успешно удалена", tasksKeyboard);
+        sendText(userId, "Задача «" + chose + "» успешно удалена.", tasksKeyboard);
         taskService.delTaskById(userId,Long.parseLong(chose));
         returnTask();
     }
 
     public void addTag(){
         if (state == State.NULL) {
-            sendText(userId, "Введите название тэга", tagsKeyboard);
+            sendText(userId, "Введите название тега...", tagsKeyboard);
             state = State.ADD_TAG;
             return;
         }
 
         if (state == State.ADD_TAG && !tag.contains(" ")) {
-            sendText(userId, "Вы добавили тэг: " + tag, settingsKeyboard);
+            sendText(userId, "Вы добавили тег «" + tag + "».", settingsKeyboard);
             tagService.addTag(userId,tag,false);
             state = State.NULL;
         }
         else{
-            sendText(userId, "Неправильно, попробуйте ещё ", tagsKeyboard);
+            sendText(userId, "Неправильно, попробуйте ещё раз...", tagsKeyboard);
         }
     }
 
@@ -226,7 +229,6 @@ public class Bot extends TelegramLongPollingBot {
 
         mainMenuKeyboard = keyboardManager.createMainKeyboard();
 
-        yesNoKeyboard = keyboardManager.createYesNoKeyboard();
 
         choseKeyboard = keyboardManager.createChoseKeyboard();
 
