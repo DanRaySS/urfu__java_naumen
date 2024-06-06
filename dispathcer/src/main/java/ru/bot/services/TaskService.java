@@ -74,7 +74,7 @@ public class TaskService {
         Date time=new java.util.Date((long)task.getStart_date()*1000);
         SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy");
         String stringDate= dateFor.format(time);
-        String tempS = String.format("%s\n\n%s\n\n%s\n\n%s",task.getSummary(),task.getDescription(),stringDate,task.getTag());
+        String tempS = String.format("%s\n\n%s\n\n%s\n\n%s","Название: " + task.getSummary(),"Описание: " + task.getDescription(),"Время создания: " +  stringDate,"Тег: " + task.getTag());
 
         return tempS;
     }
