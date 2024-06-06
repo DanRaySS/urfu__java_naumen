@@ -1,6 +1,7 @@
 package ru.bot.services;
 
 import org.springframework.stereotype.Service;
+import ru.bot.models.State;
 import ru.bot.models.User;
 import ru.bot.repository.UserRepository;
 
@@ -13,7 +14,7 @@ public class UsersService {
     }
 
     public void addUser(Long id){
-        User user = new User(id, null, null);
+        User user = new User(id);
         userRepository.save(user);
     }
 }

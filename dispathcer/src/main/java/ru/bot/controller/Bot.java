@@ -1,19 +1,14 @@
 package ru.bot.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.bot.models.State;
 import ru.bot.models.Tag;
-import ru.bot.models.User;
-import ru.bot.repository.TaskRepository;
-import ru.bot.repository.UserRepository;
 import ru.bot.services.TagService;
 import ru.bot.services.TaskService;
 import ru.bot.services.UsersService;
@@ -29,16 +24,22 @@ public class Bot extends TelegramLongPollingBot {
     final TaskService taskService;
     final TagService tagService;
 
+    KeyboardManager keyboardManager= new KeyboardManager();
     private ReplyKeyboardMarkup mainMenuKeyboard;
     private ReplyKeyboardMarkup tasksKeyboard;
-
     private ReplyKeyboardMarkup yesNoKeyboard;
+    private ReplyKeyboardMarkup choseKeyboard;
+    private ReplyKeyboardMarkup settingsKeyboard;
+    private ReplyKeyboardMarkup tagsKeyboard;
 
-    String message;
-    private InlineKeyboardMarkup keyboardM1;
-    private InlineKeyboardMarkup keyboardM2;
+    Long userId;
+    State state = State.NULL;
 
-
+    String summary;
+    String description;
+    String tags;
+    String chose;
+    String tag;
 
 
     @Override
@@ -54,17 +55,156 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         createKeyboards();
-        var msg = update.getMessage();
-        message = msg.getText();
-        var user = msg.getFrom();
-        var id = user.getId();
-        var userName = user.getUserName();
-        menuLogic(msg.getText(),id,userName);
+        if (update.hasMessage() && update.getMessage().hasText()) {
+
+            String messageText = update.getMessage().getText();
+            userId = update.getMessage().getFrom().getId();
+            long chatId = update.getMessage().getChatId();
+            String memberName = update.getMessage().getFrom().getFirstName();
+            System.out.println("||UPDATE||---- " + messageText);
+            if (!messageText.contains("null") && chatId == userId ) {
+                switch (state) {
+                    case SUMMARY -> {
+                        summary = messageText;
+                        addTask();
+                    }
+                    case DESCRIPTION -> {
+                        description = messageText;
+                        addTask();
+                    }
+                    case TAGS -> {
+                        tags = messageText;
+                        addTask();
+                    }
+                    case CHOSE -> {
+                        chose = messageText;
+                        choseTask();
+                    }
+                    case ADD_TAG -> {
+                        tag = messageText;
+                        addTag();
+                    }
+                }
+            }
+
+            menuLogic(messageText, userId, memberName);
+
+        }
 
         return;                                     //We don't want to echo commands, so we exit
 
     }
-    public void sendText(Long who, String what, ReplyKeyboardMarkup keyboard){
+
+    public void addTask() {
+        if (state == State.NULL) {
+            sendText(userId, "Введите название", tasksKeyboard);
+            state = State.SUMMARY;
+            return;
+        }
+        if (state == State.SUMMARY) {
+            sendText(userId, "Введите описание", tasksKeyboard);
+            state = State.DESCRIPTION;
+            return;
+        }
+        if (state == State.DESCRIPTION) {
+            sendText(userId, "Введите тэги через пробел\n" + tagService.getAllTags(userId) , tasksKeyboard);
+            state = State.TAGS;
+            return;
+        }
+        if (state == State.TAGS) {
+            state = State.NULL;
+            sendText(userId, "Задание " + summary + " успешно добавленно", tasksKeyboard);
+            List<Tag> tempTags = new ArrayList<>();
+            String[] tegege = tags.split(" ");
+            for (String tag : tegege) {
+                tempTags.add(tagService.getTagBySummary(tag));
+            }
+            taskService.createTask(summary, description, userId, tempTags);
+        }
+
+    }
+
+    public void menuLogic(String msg, Long id, String user) {
+        switch (msg) {
+            case ("➕ Добавить задачу"):
+                addTask();
+                break;
+            case ("📋 Архив задач"):
+                returnTask();
+                break;
+            case ("👆 Выбрать задачу"):
+                choseTask();
+                break;
+            case ("Мои Задачи"):
+                returnTask();
+                break;
+            case ("/start"):
+                sendText(id, "Привет " + user, mainMenuKeyboard);
+                usersService.addUser(id);
+                break;
+            case ("⬅ Главное Меню"):
+                sendText(id, "Главное меню", mainMenuKeyboard);
+                break;
+            case ("Удалить"):
+                delTask();
+                break;
+            case ("Настройки"):
+                sendText(userId,"Меню Настройки",settingsKeyboard);
+                break;
+            case ("Мои теги"):
+                sendText(userId,tagService.getAllTags(userId),tagsKeyboard);
+                break;
+            case ("Создать тэг"):
+                addTag();
+                break;
+        }
+    }
+
+    public void choseTask() {
+        if (state == State.NULL) {
+            sendText(userId, "Введите номер задачи", tasksKeyboard);
+            state = State.CHOSE;
+            return;
+        }
+        if (state == State.CHOSE) {
+            sendText(userId, "Вы выбрали задание " + chose, tasksKeyboard);
+            sendText(userId, taskService.getTaskById(Long.parseLong(chose), userId), choseKeyboard);
+            state = State.NULL;
+        }
+    }
+
+    public void returnTask() {
+        if (taskService.getAllTasks(userId).isEmpty()) {
+            sendText(userId, "Нет задач", tasksKeyboard);
+        } else {
+            sendText(userId, String.join("\n", taskService.getAllTasks(userId)), tasksKeyboard);
+        }
+    }
+
+    public void delTask() {
+        sendText(userId, "Задача " + chose + " успешно удалена", tasksKeyboard);
+        taskService.delTaskById(userId,Long.parseLong(chose));
+        returnTask();
+    }
+
+    public void addTag(){
+        if (state == State.NULL) {
+            sendText(userId, "Введите название тэга без пробелов", tagsKeyboard);
+            state = State.ADD_TAG;
+            return;
+        }
+
+        if (state == State.ADD_TAG && !tag.contains(" ")) {
+            sendText(userId, "Вы добавили тэг " + tag, settingsKeyboard);
+            tagService.addTag(userId,tag,false);
+            state = State.NULL;
+        }
+        else{
+            sendText(userId, "Неправильно, попробуйте ещё ", tagsKeyboard);
+        }
+    }
+
+    public void sendText(Long who, String what, ReplyKeyboardMarkup keyboard) {
         SendMessage sm = SendMessage.builder()
                 .chatId(who.toString()) //Who are we sending a message to
                 .text(what).build();    //Message content
@@ -76,106 +216,19 @@ public class Bot extends TelegramLongPollingBot {
             throw new RuntimeException(e);      //Any error will be printed here
         }
     }
-    private void createKeyboards(){
-        ReplyKeyboardMarkup taskKeyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> taskKeyboardRows = new ArrayList<>();
 
-        KeyboardRow row = new KeyboardRow();
-        row.add("👆 Выбрать задачу");
-        row.add("➕ Добавить задачу");
-        row.add("📋 Архив задач");
-        taskKeyboardRows.add(row);
-        row = new KeyboardRow();
-        row.add("⬅ Главное Меню");
-        taskKeyboardRows.add(row);
+    private void createKeyboards() {
+        tasksKeyboard = keyboardManager.createTaskKeyboard();
 
-        taskKeyboardMarkup.setKeyboard(taskKeyboardRows);
-        tasksKeyboard = taskKeyboardMarkup;
+        mainMenuKeyboard = keyboardManager.createMainKeyboard();
 
-        ReplyKeyboardMarkup mainKeyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> mainKeyboardRows = new ArrayList<>();
-        row = new KeyboardRow();
-        row.add("Мои Задачи");
-        row.add("Инструкция");
-        row.add("Настройки");
-        mainKeyboardRows.add(row);
-        mainKeyboardMarkup.setKeyboard(mainKeyboardRows);
-        mainMenuKeyboard = mainKeyboardMarkup;
+        yesNoKeyboard = keyboardManager.createYesNoKeyboard();
 
-        ReplyKeyboardMarkup yesNoKeyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> yesNoKeyboardRows = new ArrayList<>();
-        row = new KeyboardRow();
-        row.add("Да");
-        row.add("Нет");
-        yesNoKeyboardRows.add(row);
-        yesNoKeyboardMarkup.setKeyboard(yesNoKeyboardRows);
-        yesNoKeyboard = yesNoKeyboardMarkup;
+        choseKeyboard = keyboardManager.createChoseKeyboard();
 
+        settingsKeyboard = keyboardManager.createSettingsKeyboard();
 
-
-    }
-    public void menuLogic(String msg, Long id, String user){
-        switch (msg){
-            case ("➕ Добавить задачу"):
-                User userInfo = new User(id, null, null);
-                addTask(id, msg, userInfo);
-                break;
-            case ("📋 Архив задач"):
-                archive();
-                break;
-            case ("👆 Выбрать задачу"):
-                choseTask();
-                break;
-            case ("Мои Задачи"):
-                if(taskService.getAllTasks(id).isEmpty()){
-                    sendText(id,"Нет задач",tasksKeyboard);
-                }
-                else {
-                    sendText(id,String.join("\n",taskService.getAllTasks(id)),tasksKeyboard);
-                }
-
-                break;
-            case ("/start"):
-                sendText(id, "Привет "+ user, mainMenuKeyboard);
-                usersService.addUser(id);
-            case ("⬅ Главное Меню"):
-                sendText(id, "Главное меню",mainMenuKeyboard);
-
-        }
+        tagsKeyboard = keyboardManager.createTagsKeyboard();
     }
 
-
-    public void addTask(Long id, String msg, User userInfo){
-        if (msg.equals("➕ Добавить задачу")) {
-            sendText(id, "Введите название", tasksKeyboard);
-            return;
-        }
-
-        if(userInfo.lastSummary == null || userInfo.lastSummary.trim().isEmpty()){
-            userInfo.lastSummary = msg;
-            sendText(id,"Введите описание",tasksKeyboard);
-            return;
-        }
-
-        if(userInfo.lastDesc == null || userInfo.lastDesc.trim().isEmpty()){
-            userInfo.lastDesc = msg;
-            sendText(id,"Введите теги",tasksKeyboard);
-            return;
-        }
-
-        String tags = message;
-        List<Tag> tagList =new ArrayList<>();
-        if (!tags.isEmpty()){
-            for (String tag: tags.split(" ")){
-                tagList.add(tagService.getTagBySummary(tag));
-            }
-        }
-        taskService.createTask(summary,description,id,tagList);
-    }
-    public void archive(){
-
-    }
-    public void choseTask(){
-
-    }
 }

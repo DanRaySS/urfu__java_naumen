@@ -27,10 +27,31 @@ public class TaskService {
         Task task = new Task(userRepository.findById(id).get(),time,summary,description,tag);
         taskRepository.save(task);
     }
-    public void delTaskById(Long id){
-        taskRepository.deleteById(id);
+    public void delTaskById(Long user_id, Long task_id){
+        User user = new User();
+        if(userRepository.findById(user_id).isPresent()){
+            user = userRepository.findById(user_id).get();
+        }
+        else throw new RuntimeException("No Such User");
+        List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
+        Task task = temp.get((int) (task_id-1));
+        taskRepository.deleteById(task.getId());
+
     }
-    public List<String> getAllTasks(Long user_id){
+    public String getAllTasks(Long user_id){
+        User user = new User();
+        if(userRepository.findById(user_id).isPresent()){
+            user = userRepository.findById(user_id).get();
+        }
+        else throw new RuntimeException("No Such User");
+        List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
+        StringBuilder tempS = new StringBuilder();
+        for (int i = 0; i< temp.size(); i++) {
+            tempS.append(Integer.toString(i+1)).append(". ").append(temp.get(i).toString()).append("\n");
+        }
+        return tempS.toString();
+    }
+    public String getTaskById(Long taskId, Long user_id){
         User user = new User();
         if(userRepository.findById(user_id).isPresent()){
             user = userRepository.findById(user_id).get();
@@ -38,7 +59,9 @@ public class TaskService {
         else throw new RuntimeException("No Such User");
 
         List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
+        Task task = temp.get(Math.toIntExact(taskId)-1);
+        String tempS = String.format("%s\n%s\n%s\n%s",task.getSummary(),task.getDescription(),task.getStart_date(),task.getTags());
 
-        return temp.stream().map(Objects::toString).toList();
+        return tempS;
     }
 }

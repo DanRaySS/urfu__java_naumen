@@ -5,31 +5,41 @@ import ru.bot.models.Tag;
 import ru.bot.models.Task;
 import ru.bot.models.User;
 import ru.bot.repository.TagRepository;
+import ru.bot.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 @Service
 public class TagService {
     protected final TagRepository tagRepository;
+    protected final UserRepository userRepository;
 
-    public TagService(TagRepository tagRepository) {
+    public TagService(TagRepository tagRepository, UserRepository userRepository) {
         this.tagRepository = tagRepository;
+        this.userRepository = userRepository;
     }
-    public List<Tag> getAllTags(User users){
-        return new ArrayList<>(tagRepository.findByUser(users));
+    public String getAllTags(Long user_id){
+        User user = new User();
+        if(userRepository.findById(user_id).isPresent()){
+            user = userRepository.findById(user_id).get();
+        }
+        else throw new RuntimeException("No Such User");
+        List<Tag> temp = new ArrayList<>(tagRepository.findByUser(user));
+        StringBuilder tempS = new StringBuilder();
+        for (int i = 0; i< temp.size(); i++) {
+            tempS.append(Integer.toString(i+1)).append(". ").append(temp.get(i).toString()).append("\n");
+        }
+        return tempS.toString();
     }
 
-    public void addTag(User user, String name, boolean deletable){
-        Tag newTag = new Tag(user,name,deletable);
+    public void addTag(Long user_id, String name, boolean deletable){
+        Tag newTag = new Tag(userRepository.findById(user_id).get(),name,deletable);
         tagRepository.save(newTag);
     }
     public void delTag(Long id){
         tagRepository.deleteById(id);
     }
-    public  void init(User user){
-        Tag newTag = new Tag(user,"❗Важно",false);
-        tagRepository.save(newTag);
-    }
+
     public Tag getTagBySummary(String summary){
         return  tagRepository.findByName(summary);
     }

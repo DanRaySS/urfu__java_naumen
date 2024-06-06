@@ -16,13 +16,10 @@ public class User {
     @Id
     @Column
     private Long id;
-    public String lastSummary;
-    public String lastDesc;
 
-    public User(Long id, String lastSummary, String lastDesc) {
+
+    public User(Long id) {
         this.id = id;
-        this.lastSummary = lastSummary;
-        this.lastDesc = lastDesc;
     }
 
     public User() {

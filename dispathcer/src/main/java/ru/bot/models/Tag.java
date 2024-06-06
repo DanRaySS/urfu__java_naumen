@@ -34,4 +34,9 @@ public class Tag {
         this.name = name;
         this.deletable = deletable;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
