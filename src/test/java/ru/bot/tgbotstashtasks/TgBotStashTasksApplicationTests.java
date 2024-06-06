@@ -1,10 +1,10 @@
-package ru.daniil.demo;
+package ru.bot.tgbotstashtasks;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TgTimeManagementApplicationTests {
+class TgBotStashTasksApplicationTests {
 
 	@Test
 	void contextLoads() {

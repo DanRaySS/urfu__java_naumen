@@ -1,8 +1,8 @@
-package ru.daniil.demo.services;
+package ru.bot.tgbotstashtasks.services;
 
 import org.springframework.stereotype.Service;
-import ru.bot.models.User;
-import ru.bot.repository.UserRepository;
+import ru.bot.tgbotstashtasks.models.User;
+import ru.bot.tgbotstashtasks.repository.UserRepository;
 
 @Service
 public class UsersService {

@@ -1,4 +1,4 @@
-package ru.daniil.demo.models;
+package ru.bot.tgbotstashtasks.models;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,6 +26,7 @@ public class Tag {
     @Column
     private int color;
 
+
     public Tag() {
     }
 
@@ -33,5 +34,10 @@ public class Tag {
         this.user = users;
         this.name = name;
         this.deletable = deletable;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

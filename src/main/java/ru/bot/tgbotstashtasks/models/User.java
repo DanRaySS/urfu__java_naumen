@@ -1,4 +1,4 @@
-package ru.daniil.demo.models;
+package ru.bot.tgbotstashtasks.models;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,6 +14,7 @@ public class User {
     @Id
     @Column
     private Long id;
+
 
     public User(Long id) {
         this.id = id;
