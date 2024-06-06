@@ -16,4 +16,15 @@ public class UsersService {
         User user = new User(id);
         userRepository.save(user);
     }
+
+    public User getUser(Long user_id){
+        User user = new User();
+        if(userRepository.findById(user_id).isPresent()){
+            user = userRepository.findById(user_id).get();
+        }
+        else{
+            userRepository.save(new User(user_id));
+        }
+        return user;
+    }
 }

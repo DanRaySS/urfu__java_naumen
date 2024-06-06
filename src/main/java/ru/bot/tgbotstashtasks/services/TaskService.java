@@ -18,12 +18,14 @@ public class TaskService {
     protected final TaskRepository taskRepository;
     protected final UserRepository userRepository;
     protected final TagRepository tagRepository;
+    protected final UsersService usersService;
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository, TagRepository tagRepository) {
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, TagRepository tagRepository, UsersService usersService) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
-
         this.tagRepository = tagRepository;
+
+        this.usersService = usersService;
     }
 
     public void createTask(String summary, String description, Long id, Tag tag){
@@ -32,26 +34,14 @@ public class TaskService {
         taskRepository.save(task);
     }
     public void delTaskById(Long user_id, Long task_id){
-        User user = new User();
-        if(userRepository.findById(user_id).isPresent()){
-            user = userRepository.findById(user_id).get();
-        }
-        else{
-            userRepository.save(new User(user_id));
-        }
+        User user = usersService.getUser(user_id);
         List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
         Task task = temp.get((int) (task_id-1));
         taskRepository.deleteById(task.getId());
 
     }
     public String getAllTasks(Long user_id){
-        User user = new User();
-        if(userRepository.findById(user_id).isPresent()){
-            user = userRepository.findById(user_id).get();
-        }
-        else{
-            userRepository.save(new User(user_id));
-        }
+        User user = usersService.getUser(user_id);
         List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
         StringBuilder tempS = new StringBuilder();
         for (int i = 0; i< temp.size(); i++) {
@@ -60,11 +50,7 @@ public class TaskService {
         return tempS.toString();
     }
     public String getTaskById(Long taskId, Long user_id){
-        User user = new User();
-        if(userRepository.findById(user_id).isPresent()){
-            user = userRepository.findById(user_id).get();
-        }
-        else throw new RuntimeException("No Such User");
+        User user = usersService.getUser(user_id);
 
         List<Task> temp = new ArrayList<>(taskRepository.findByUsers(user));
         Task task = temp.get(Math.toIntExact(taskId)-1);
